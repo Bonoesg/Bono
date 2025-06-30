@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bono - Protótipo Funcional</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+       
+        body {
+            background: linear-gradient(135deg, #1a2f3b, #0d5a46);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+       
+        header {
+            background: rgba(0, 30, 20, 0.85);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+       
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+       
+        .logo h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            background: linear-gradient(to right, #4ade80, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+       
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+        }
+       
+        nav a {
+            color: #c8f5d0;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+       
+        nav a:hover, nav a.active {
+            color: #4ade80;
+        }
+       
+        nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            width: 70%;
+            height: 3px;
+            background: #4ade80;
+            border-radius: 2px;
+        }
+       
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+       
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+       
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            color: #4ade80;
+            font-size: 1.4rem;
+        }
+       
+        .panel-title i {
+            background: rgba(74, 222, 128, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+       
+        #map {
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+       
+        .card {
+            background: rgba(0, 20, 15, 0.6);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            transition: transform 0.3s ease;
+        }
+       
+        .card:hover {
+            transform: translateY(-5px);
+        }
+       
+        .card h3 {
+            color: #4ade80;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+       
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+       
+        .stat-card {
+            background: rgba(0, 40, 30, 0.5);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+       
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #4ade80;
+        }
+       
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #4ade80;
+            margin: 0.5rem 0;
+        }
+       
+        .stat-card .label {
+            font-size: 0.9rem;
+            color: #a0f0b4;
+        }
+       
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+       
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+       
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e, #0ea5e9);
+            color: white;
+            flex: 1;
+        }
+       
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #c8f5d0;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+       
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+       
+        .btn:active {
+            transform: translateY(0);
+        }
+       
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+       
+        .feature {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+       
+        .feature i {
+            color: #4ade80;
+            font-size: 1.2rem;
+            margin-top: 4px;
+        }
+       
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a0f0b4;
+            font-size: 0.9rem;
+        }
+       
+        .report-preview {
+            background: white;
+            color: #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            font-family: 'Segoe UI', sans-serif;
+            height: 200px;
+            overflow-y: auto;
+        }
+       
+        .report-preview h4 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #0d5a46;
+        }
+       
+        .report-preview p {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+       
+        .highlight {
+            background: rgba(74, 222, 128, 0.2);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+       
+        .chart-container {
+            height: 200px;
+            margin-top: 1rem;
+        }
+       
+        .manual-calc {
+            background: rgba(0, 40, 30, 0.4);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1.5rem;
+        }
+       
+        .form-group {
+            margin-bottom: 1rem;
+        }
+       
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #a0f0b4;
+        }
+       
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            background: rgba(0, 20, 15, 0.6);
+            color: white;
+        }
+       
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+       
+        .selected-areas {
+            margin-top: 1rem;
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(0, 20, 15, 0.4);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+       
+        .area-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(74, 222, 128, 0.2);
+        }
+       
+        .area-item:last-child {
+            border-bottom: none;
+        }
+       
+        .area-item .remove {
+            color: #ff6b6b;
+            cursor: pointer;
+        }
+       
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: rgba(74, 222, 128, 0.1);
+        }
+       
+        .status-indicator .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+       
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+           
+            .stats {
+                grid-template-columns: 1fr;
+            }
+           
+            nav ul {
+                gap: 0.8rem;
+            }
+           
+            nav a {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-leaf fa-2x" style="color: #4ade80;"></i>
+            <h1>BONO</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#" class="active">Protótipo</a></li>
+                <li><a href="#">Mapa</a></li>
+                <li><a href="#">Cálculos</a></li>
+                <li><a href="#">Relatórios</a></li>
+            </ul>
+        </nav>
+    </header>
+   
+    <div class="container">
+        <div class="panel">
+            <div class="panel-title">
+                <i class="fas fa-map-marked-alt"></i>
+                <h2>Mapeamento de Áreas Verdes</h2>
+            </div>
+            <div id="map"></div>
+           
+            <div class="card">
+                <h3><i class="fas fa-info-circle"></i> Instruções</h3>
+                <p>Selecione uma ou mais áreas verdes no mapa para calcular o potencial de captura de carbono e receita.</p>
+                <div class="status-indicator">
+                    <div class="dot"></div>
+                    <div>Selecionado: <span id="selected-count">0</span> áreas</div>
+                </div>
+            </div>
+           
+            <div class="manual-calc">
+                <h3><i class="fas fa-calculator"></i> Simulação Manual</h3>
+                <p>Calcule para uma área não mapeada:</p>
+               
+                <div class="form-group">
+                    <label for="manual-name">Nome da Área</label>
+                    <input type="text" id="manual-name" placeholder="Digite o nome da área">
+                </div>
+               
+                <div class="form-group">
+                    <label for="manual-area">Tamanho (m²)</label>
+                    <input type="number" id="manual-area" placeholder="Digite o tamanho em m²">
+                </div>
+               
+                <div class="form-group">
+                    <label for="manual-type">Tipo de Área</label>
+                    <select id="manual-type">
+                        <option value="Parque">Parque</option>
+                        <option value="Bosque">Bosque</option>
+                        <option value="Jardim">Jardim</option>
+                        <option value="Praça">Praça</option>
+                        <option value="Área Arborizada">Área Arborizada</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+               
+                <button class="btn btn-secondary" id="add-manual" style="width: 100%;">
+                    <i class="fas fa-plus"></i> Adicionar ao Cálculo
+                </button>
+            </div>
+        </div>
+       
+        <div class="panel">
+            <div class="panel-title">
+                <i class="fas fa-calculator"></i>
+                <h2>Cálculo de Carbono e Receita</h2>
+            </div>
+           
+            <div class="card">
+                <h3><i class="fas fa-chart-line"></i> Resumo Financeiro</h3>
+               
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="value" id="area-value">0 m²</div>
+                        <div class="label">Área Verde Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="co2-value">0 t</div>
+                        <div class="label">CO₂ Capturado/Ano</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="revenue-value">R$ 0</div>
+                        <div class="label">Receita Anual</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="credit-value">0</div>
+                        <div class="label">Créditos de Carbono</div>
+                    </div>
+                </div>
+               
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+           
+            <div class="card">
+                <h3><i class="fas fa-list"></i> Áreas Selecionadas</h3>
+                <div class="selected-areas" id="selected-areas-list">
+                    <p>Nenhuma área selecionada</p>
+                </div>
+               
+                <div class="actions">
+                    <button class="btn btn-primary" id="generate-pdf">
+                        <i class="fas fa-file-pdf"></i> Gerar Pré-Certificação
+                    </button>
+                    <button class="btn btn-secondary" id="reset">
+                        <i class="fas fa-sync-alt"></i> Reiniciar
+                    </button>
+                </div>
+            </div>
+           
+            <div class="card">
+                <h3><i class="fas fa-file-alt"></i> Pré-visualização do Relatório</h3>
+                <div class="report-preview" id="report-preview">
+                    <p>Nenhum relatório gerado ainda. Selecione uma área e clique em "Gerar Pré-Certificação".</p>
+                </div>
+            </div>
+        </div>
+    </div>
+   
+    <footer>
+        <p>Projeto Bono - Transformando ativos ambientais em valor econômico</p>
+        <p>Projeto em desenvolvimento | Protótipo funcional v2.0</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Inicialização do mapa
+        const map = L.map('map').setView([-23.511, -46.872], 13);
+       
+        // Adicionar camada do mapa
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+       
+        // Áreas verdes de Barueri para demonstração
+        const greenAreas = [
+            {
+                id: 1,
+                name: "Parque Municipal de Barueri",
+                coords: [-23.518, -46.878],
+                area: 85000,
+                type: "Parque"
+            },
+            {
+                id: 2,
+                name: "Parque Ecológico do Viana",
+                coords: [-23.507, -46.851],
+                area: 55000,
+                type: "Parque"
+            },
+            {
+                id: 3,
+                name: "Jardim Belval",
+                coords: [-23.498, -46.865],
+                area: 32000,
+                type: "Área Arborizada"
+            },
+            {
+                id: 4,
+                name: "Praça Coronel Avelino",
+                coords: [-23.526, -46.862],
+                area: 12000,
+                type: "Praça"
+            },
+            {
+                id: 5,
+                name: "Bosque do Alphaville",
+                coords: [-23.491, -46.848],
+                area: 45000,
+                type: "Bosque"
+            }
+        ];
+       
+        // Variáveis globais
+        let selectedAreas = [];
+        let revenueChart = null;
+       
+        // Adicionar marcadores ao mapa
+        greenAreas.forEach(area => {
+            const marker = L.marker(area.coords, {
+                areaId: area.id
+            }).addTo(map);
+           
+            marker.bindPopup(`
+                <b>${area.name}</b><br>
+                Tipo: ${area.type}<br>
+                Área: ${(area.area).toLocaleString()} m²
+                <div style="margin-top: 10px; text-align: center;">
+                    <button onclick="toggleAreaSelection(${area.id})"
+                        style="background: #4ade80; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; color: white;">
+                        Selecionar
+                    </button>
+                </div>
+            `);
+        });
+       
+        // Função para selecionar/deselecionar área
+        function toggleAreaSelection(areaId) {
+            const area = greenAreas.find(a => a.id === areaId);
+            if (!area) return;
+           
+            const index = selectedAreas.findIndex(a => a.id === areaId);
+           
+            if (index === -1) {
+                // Adicionar à seleção
+                selectedAreas.push(area);
+            } else {
+                // Remover da seleção
+                selectedAreas.splice(index, 1);
+            }
+           
+            updateSelectedAreasDisplay();
+            updateCalculations();
+        }
+       
+        // Atualizar a exibição de áreas selecionadas
+        function updateSelectedAreasDisplay() {
+            const selectedList = document.getElementById('selected-areas-list');
+            const countElement = document.getElementById('selected-count');
+           
+            countElement.textContent = selectedAreas.length;
+           
+            if (selectedAreas.length === 0) {
+                selectedList.innerHTML = '<p>Nenhuma área selecionada</p>';
+                return;
+            }
+           
+            let html = '';
+            selectedAreas.forEach(area => {
+                html += `
+                    <div class="area-item">
+                        <div>
+                            <strong>${area.name}</strong><br>
+                            <small>${area.type} - ${area.area.toLocaleString()} m²</small>
+                        </div>
+                        <div class="remove" onclick="removeArea(${area.id})">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+                `;
+            });
+           
+            selectedList.innerHTML = html;
+        }
+       
+        // Remover área da seleção
+        function removeArea(areaId) {
+            selectedAreas = selectedAreas.filter(a => a.id !== areaId);
+            updateSelectedAreasDisplay();
+            updateCalculations();
+        }
+       
+        // Atualizar cálculos
+        function updateCalculations() {
+            let totalArea = 0;
+            let totalCo2 = 0;
+           
+            selectedAreas.forEach(area => {
+                totalArea += area.area;
+                // Calcular CO2 capturado (0.5 toneladas por m² por ano)
+                totalCo2 += area.area * 0.5;
+            });
+           
+            // Calcular créditos de carbono (1 crédito = 1 tonelada de CO2)
+            const credits = totalCo2;
+            // Calcular receita (R$ 15 por crédito)
+            const revenue = credits * 15;
+           
+            document.getElementById('area-value').textContent = totalArea.toLocaleString() + ' m²';
+            document.getElementById('co2-value').textContent = totalCo2.toLocaleString() + ' t';
+            document.getElementById('credit-value').textContent = credits.toLocaleString();
+            document.getElementById('revenue-value').textContent = 'R$ ' + revenue.toLocaleString();
+           
+            updateRevenueChart(revenue);
+        }
+       
+        // Atualizar gráfico de receita
+        function updateRevenueChart(revenue) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+           
+            // Destruir gráfico anterior se existir
+            if (revenueChart) {
+                revenueChart.destroy();
+            }
+           
+            // Criar novo gráfico
+            revenueChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Receita Anual'],
+                    datasets: [{
+                        label: 'Valor em R$',
+                        data: [revenue],
+                        backgroundColor: 'rgba(74, 222, 128, 0.7)',
+                        borderColor: 'rgba(74, 222, 128, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#fff',
+                                callback: function(value) {
+                                    return 'R$ ' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#fff'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+       
+        // Adicionar área manual
+        document.getElementById('add-manual').addEventListener('click', function() {
+            const name = document.getElementById('manual-name').value;
+            const area = parseFloat(document.getElementById('manual-area').value);
+            const type = document.getElementById('manual-type').value;
+           
+            if (!name || !area) {
+                alert("Por favor, preencha o nome e o tamanho da área.");
+                return;
+            }
+           
+            // Criar objeto para área manual
+            const manualArea = {
+                id: Date.now(), // ID único
+                name: name,
+                area: area,
+                type: type,
+                manual: true
+            };
+           
+            // Adicionar à seleção
+            selectedAreas.push(manualArea);
+            updateSelectedAreasDisplay();
+            updateCalculations();
+           
+            // Limpar formulário
+            document.getElementById('manual-name').value = '';
+            document.getElementById('manual-area').value = '';
+           
+            alert("Área adicionada com sucesso!");
+        });
+       
+        // Gerar relatório em PDF (simulação)
+        document.getElementById('generate-pdf').addEventListener('click', function() {
+            if (selectedAreas.length === 0) {
+                alert("Por favor, selecione pelo menos uma área antes de gerar o relatório.");
+                return;
+            }
+           
+            const totalArea = selectedAreas.reduce((sum, area) => sum + area.area, 0);
+            const totalCo2 = totalArea * 0.5;
+            const credits = totalCo2;
+            const revenue = credits * 15;
+           
+            let areasList = '';
+            selectedAreas.forEach(area => {
+                const co2 = area.area * 0.5;
+                areasList += `<p><strong>${area.name}</strong> (${area.type}): ${area.area.toLocaleString()} m² - ${co2.toLocaleString()} t CO₂</p>`;
+            });
+           
+            const reportPreview = document.getElementById('report-preview');
+            reportPreview.innerHTML = `
+                <h4>PRÉ-CERTIFICAÇÃO DE CRÉDITOS DE CARBONO</h4>
+                <p><span class="highlight">Projeto:</span> ${selectedAreas.length > 1 ? 'Múltiplas Áreas' : selectedAreas[0].name}</p>
+                <p><span class="highlight">Localização:</span> Barueri, São Paulo, Brasil</p>
+                <p><span class="highlight">Data:</span> ${new Date().toLocaleDateString()}</p>
+                <hr>
+                <p><span class="highlight">Áreas incluídas (${selectedAreas.length}):</span></p>
+                ${areasList}
+                <hr>
+                <p><span class="highlight">Área total:</span> ${totalArea.toLocaleString()} m²</p>
+                <p><span class="highlight">CO₂ capturado/ano:</span> ${totalCo2.toLocaleString()} t</p>
+                <p><span class="highlight">Créditos de carbono gerados/ano:</span> ${credits.toLocaleString()}</p>
+                <p><span class="highlight">Receita potencial anual:</span> R$ ${revenue.toLocaleString()}</p>
+                <hr>
+                <p><span class="highlight">Metodologia:</span> Baseada em padrões IPCC</p>
+                <p><span class="highlight">Próximos passos:</span> Auditoria externa com empresa credenciada</p>
+                <p><span class="highlight">Sugestão de auditora:</span> CRVEs - Certificadora Brasileira</p>
+            `;
+           
+            // Simular download
+            setTimeout(() => {
+                alert("Relatório de pré-certificação gerado com sucesso! Em uma implementação completa, o PDF seria baixado automaticamente.");
+            }, 500);
+        });
+       
+        // Botão de reiniciar
+        document.getElementById('reset').addEventListener('click', function() {
+            selectedAreas = [];
+            updateSelectedAreasDisplay();
+            updateCalculations();
+            document.getElementById('report-preview').innerHTML =
+                "<p>Nenhum relatório gerado ainda. Selecione uma área e clique em 'Gerar Pré-Certificação'.</p>";
+           
+            // Resetar gráfico
+            if (revenueChart) {
+                revenueChart.destroy();
+                revenueChart = null;
+            }
+        });
+       
+        // Inicializar com uma área selecionada para demonstração
+        setTimeout(() => {
+            selectedAreas.push(greenAreas[1]);
+            updateSelectedAreasDisplay();
+            updateCalculations();
+            map.setView(greenAreas[1].coords, 14);
+        }, 1000);
+    </script>
+</body>
+</html>
